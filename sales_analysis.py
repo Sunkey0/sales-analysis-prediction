@@ -170,13 +170,13 @@ st.header("Predicción de Ventas con ARIMA")
 ventas_por_mes.set_index('Mes', inplace=True)
 predicciones_futuras_arima, predicciones_historicas_arima, modelo_arima = predecir_con_arima(ventas_por_mes['Ingreso'], orden=(1, 1, 1))
 
-# Mostrar predicciones futuras
-st.write("Predicciones ARIMA para los próximos 6 meses:")
-st.write(predicciones_futuras_arima)
+# Mostrar predicciones futuras en un menú desplegable
+with st.expander("Predicciones ARIMA para los próximos 6 meses"):
+    st.write(predicciones_futuras_arima)
 
-# Mostrar predicciones históricas
-st.write("Predicciones ARIMA dentro de la muestra (histórico):")
-st.write(predicciones_historicas_arima)
+# Mostrar predicciones históricas en un menú desplegable
+with st.expander("Predicciones ARIMA dentro de la muestra (histórico)"):
+    st.write(predicciones_historicas_arima)
 
 # Calcular el error absoluto medio (MAE) para ARIMA
 mae_arima = mean_absolute_error(ventas_por_mes['Ingreso'], predicciones_historicas_arima)
@@ -192,13 +192,13 @@ df_prophet['ds'] = pd.to_datetime(df_prophet['ds'])
 
 predicciones_prophet, modelo_prophet = predecir_con_prophet(df_prophet)
 
-# Mostrar predicciones futuras
-st.write("Predicciones Prophet para los próximos 6 meses:")
-st.write(predicciones_prophet[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(6))
+# Mostrar predicciones futuras en un menú desplegable
+with st.expander("Predicciones Prophet para los próximos 6 meses"):
+    st.write(predicciones_prophet[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(6))
 
-# Mostrar predicciones históricas
-st.write("Predicciones Prophet dentro de la muestra (histórico):")
-st.write(predicciones_prophet[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].head(len(df_prophet)))
+# Mostrar predicciones históricas en un menú desplegable
+with st.expander("Predicciones Prophet dentro de la muestra (histórico)"):
+    st.write(predicciones_prophet[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].head(len(df_prophet)))
 
 # Gráfico comparativo de predicciones
 st.header("Comparación de Predicciones: ARIMA vs Prophet")
@@ -210,3 +210,31 @@ fig.add_scatter(x=predicciones_prophet['ds'], y=predicciones_prophet['yhat'], na
 fig.update_layout(title='Comparación de Predicciones: ARIMA vs Prophet',
                   xaxis_title='Mes', yaxis_title='Ingreso ($)')
 st.plotly_chart(fig, use_container_width=True)
+
+# Sección de KPIs y Alarmas
+st.header("KPIs y Alarmas")
+
+# Calcular KPIs
+ingreso_total = df_filtrado['Ingreso'].sum()
+beneficio_total = df_filtrado['Beneficio'].sum()
+crecimiento_mensual = ventas_por_mes['Ingreso'].pct_change().iloc[-1] * 100
+
+# Mostrar KPIs
+st.subheader("KPIs Clave")
+col1, col2, col3 = st.columns(3)
+col1.metric("Ingreso Total", f"${ingreso_total:,.2f}")
+col2.metric("Beneficio Total", f"${beneficio_total:,.2f}")
+col3.metric("Crecimiento Mensual", f"{crecimiento_mensual:.2f}%")
+
+# Alarmas
+st.subheader("Alarmas")
+if beneficio_total < 100000:
+    st.error("⚠️ El beneficio total es menor a $100,000. ¡Revisar estrategias!")
+if crecimiento_mensual < 0:
+    st.warning("⚠️ El crecimiento mensual es negativo. ¡Investigar causas!")
+
+# Información Relevante
+st.header("Información Relevante")
+st.write("**Producto más rentable:**", ventas_por_producto.loc[ventas_por_producto['Beneficio'].idxmax()]['Producto'])
+st.write("**Región con mayor crecimiento:**", ventas_por_region.loc[ventas_por_region['Ingreso'].idxmax()]['Región'])
+st.write("**Mes con mayores ingresos:**", ventas_por_mes.loc[ventas_por_mes['Ingreso'].idxmax()]['Mes'].strftime('%Y-%m'))
