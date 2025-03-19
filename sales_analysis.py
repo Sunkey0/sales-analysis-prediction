@@ -288,4 +288,6 @@ El modelo ARIMA se define por tres parámetros: \( p \) (términos autorregresiv
 ### 6. Modelo Prophet
 El modelo Prophet descompone la serie temporal en tendencia (\( g(t) \)), estacionalidad (\( s(t) \)), días festivos (\( h(t) \)) y ruido (\( \epsilon_t \)):
 \[
-y(t) = g(t) +
+y(t) = g(t) + s(t) + h(t) + \epsilon_t
+\]
+""")
