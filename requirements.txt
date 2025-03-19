@@ -1,0 +1,8 @@
+pandas
+numpy
+faker
+matplotlib
+seaborn
+statsmodels
+prophet
+streamlit
