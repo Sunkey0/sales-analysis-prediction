@@ -257,37 +257,35 @@ st.header("Ecuaciones y Fórmulas Utilizadas")
 st.markdown("""
 ### 1. Ingreso
 El ingreso se calcula multiplicando la cantidad vendida por el precio unitario:
-\[
-\text{Ingreso} = \text{Cantidad Vendida} \times \text{Precio Unitario}
-\]
+""")
+st.latex(r"\text{Ingreso} = \text{Cantidad Vendida} \times \text{Precio Unitario}")
 
+st.markdown("""
 ### 2. Beneficio
 El beneficio se calcula restando los costos totales del ingreso:
-\[
-\text{Beneficio} = \text{Ingreso} - (\text{Cantidad Vendida} \times \text{Costo Unitario})
-\]
+""")
+st.latex(r"\text{Beneficio} = \text{Ingreso} - (\text{Cantidad Vendida} \times \text{Costo Unitario})")
 
+st.markdown("""
 ### 3. Crecimiento Mensual
 El crecimiento mensual se calcula como el cambio porcentual en los ingresos de un mes a otro:
-\[
-\text{Crecimiento Mensual} = \frac{\text{Ingreso del Mes Actual} - \text{Ingreso del Mes Anterior}}{\text{Ingreso del Mes Anterior}} \times 100
-\]
+""")
+st.latex(r"\text{Crecimiento Mensual} = \frac{\text{Ingreso del Mes Actual} - \text{Ingreso del Mes Anterior}}{\text{Ingreso del Mes Anterior}} \times 100")
 
+st.markdown("""
 ### 4. Error Absoluto Medio (MAE)
 El MAE mide la precisión de las predicciones comparando los valores reales con los predichos:
-\[
-\text{MAE} = \frac{1}{n} \sum_{i=1}^{n} |y_i - \hat{y}_i|
-\]
+""")
+st.latex(r"\text{MAE} = \frac{1}{n} \sum_{i=1}^{n} |y_i - \hat{y}_i|")
 
+st.markdown("""
 ### 5. Modelo ARIMA
 El modelo ARIMA se define por tres parámetros: \( p \) (términos autorregresivos), \( d \) (diferenciaciones) y \( q \) (términos de media móvil):
-\[
-\text{ARIMA}(p, d, q)
-\]
+""")
+st.latex(r"\text{ARIMA}(p, d, q)")
 
+st.markdown("""
 ### 6. Modelo Prophet
 El modelo Prophet descompone la serie temporal en tendencia (\( g(t) \)), estacionalidad (\( s(t) \)), días festivos (\( h(t) \)) y ruido (\( \epsilon_t \)):
-\[
-y(t) = g(t) + s(t) + h(t) + \epsilon_t
-\]
 """)
+st.latex(r"y(t) = g(t) + s(t) + h(t) + \epsilon_t")
