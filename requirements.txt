@@ -8,3 +8,5 @@ prophet
 streamlit
 plotly
 pmdarima 
+scikit-learn
+scipy
