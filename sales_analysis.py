@@ -235,6 +235,18 @@ if crecimiento_mensual < 0:
 
 # Información Relevante
 st.header("Información Relevante")
-st.write("**Producto más rentable:**", ventas_por_producto.loc[ventas_por_producto['Beneficio'].idxmax()]['Producto'])
-st.write("**Región con mayor crecimiento:**", ventas_por_region.loc[ventas_por_region['Ingreso'].idxmax()]['Región'])
-st.write("**Mes con mayores ingresos:**", ventas_por_mes.loc[ventas_por_mes['Ingreso'].idxmax()]['Mes'].strftime('%Y-%m'))
+
+# Restablecer el índice para acceder a la columna 'Mes'
+ventas_por_mes_reset = ventas_por_mes.reset_index()
+
+# Mostrar el mes con mayores ingresos
+mes_max_ingresos = ventas_por_mes_reset.loc[ventas_por_mes_reset['Ingreso'].idxmax()]['Mes']
+st.write("**Mes con mayores ingresos:**", mes_max_ingresos.strftime('%Y-%m'))
+
+# Mostrar el producto más rentable
+producto_mas_rentable = ventas_por_producto.loc[ventas_por_producto['Beneficio'].idxmax()]['Producto']
+st.write("**Producto más rentable:**", producto_mas_rentable)
+
+# Mostrar la región con mayor crecimiento
+region_mayor_crecimiento = ventas_por_region.loc[ventas_por_region['Ingreso'].idxmax()]['Región']
+st.write("**Región con mayor crecimiento:**", region_mayor_crecimiento)
