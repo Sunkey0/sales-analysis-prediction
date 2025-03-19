@@ -148,7 +148,9 @@ ventas_por_mes = df_filtrado.groupby('Mes').agg({
     'Beneficio': 'sum',
     'Cantidad Vendida': 'sum'
 }).reset_index()
-ventas_por_mes['Mes'] = ventas_por_mes['Mes'].astype(str)
+
+# Convertir la columna 'Mes' a formato de fecha (datetime)
+ventas_por_mes['Mes'] = ventas_por_mes['Mes'].dt.to_timestamp()
 
 # Mostrar DataFrame en un menú desplegable
 with st.expander("Ventas Mensuales"):
@@ -197,7 +199,10 @@ st.write(prediccion_arima)
 st.header("Predicción de Ventas con Facebook Prophet")
 df_prophet = ventas_por_mes.reset_index()[['Mes', 'Ingreso']]
 df_prophet.columns = ['ds', 'y']
-df_prophet['ds'] = df_prophet['ds'].dt.to_timestamp()
+
+# Asegurarse de que 'ds' sea de tipo datetime
+df_prophet['ds'] = pd.to_datetime(df_prophet['ds'])
+
 prediccion_prophet = predecir_con_prophet(df_prophet)
 
 # Mostrar predicciones
