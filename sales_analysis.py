@@ -5,6 +5,8 @@ import random
 from datetime import datetime, timedelta
 import plotly.express as px
 import streamlit as st
+from statsmodels.tsa.arima.model import ARIMA
+from prophet import Prophet
 
 # Configuración
 NUM_REGISTROS = 10000
@@ -42,6 +44,38 @@ def generar_datos_ventas(num_registros, productos, regiones, fecha_inicio, fecha
     df['Ingreso'] = df['Cantidad Vendida'] * df['Precio Unitario']
     df['Beneficio'] = df['Ingreso'] - (df['Cantidad Vendida'] * df['Costo Unitario'])
     return df
+
+def predecir_con_arima(serie_temporal, orden=(5, 1, 0), pasos=6):
+    """
+    Realiza predicciones usando un modelo ARIMA.
+
+    Args:
+        serie_temporal (pd.Series): Serie temporal para entrenar el modelo.
+        orden (tuple): Parámetros (p, d, q) del modelo ARIMA.
+        pasos (int): Número de pasos a predecir.
+
+    Returns:
+        pd.Series: Predicciones.
+    """
+    modelo = ARIMA(serie_temporal, order=orden)
+    modelo_ajustado = modelo.fit()
+    return modelo_ajustado.forecast(steps=pasos)
+
+def predecir_con_prophet(df, periodo_prediccion=6):
+    """
+    Realiza predicciones usando Facebook Prophet.
+
+    Args:
+        df (pd.DataFrame): DataFrame con columnas 'ds' (fecha) y 'y' (valor).
+        periodo_prediccion (int): Número de períodos a predecir.
+
+    Returns:
+        pd.DataFrame: Predicciones.
+    """
+    modelo = Prophet()
+    modelo.fit(df)
+    future = modelo.make_future_dataframe(periods=periodo_prediccion, freq='M')
+    return modelo.predict(future)
 
 # Configuración de Streamlit
 st.set_page_config(page_title="Análisis de Ventas", layout="wide")
@@ -142,4 +176,40 @@ st.plotly_chart(fig, use_container_width=True)
 st.header("Relación entre Ingreso y Beneficio")
 fig = px.scatter(df_filtrado, x='Ingreso', y='Beneficio', color='Producto', 
                  title='Ingreso vs Beneficio', labels={'Ingreso': 'Ingreso ($)', 'Beneficio': 'Beneficio ($)'})
+st.plotly_chart(fig, use_container_width=True)
+
+# Mapa de calor de correlaciones
+st.header("Mapa de Calor de Correlaciones")
+correlaciones = df_filtrado[['Cantidad Vendida', 'Precio Unitario', 'Costo Unitario', 'Ingreso', 'Beneficio']].corr()
+fig = px.imshow(correlaciones, text_auto=True, title='Mapa de Calor de Correlaciones')
+st.plotly_chart(fig, use_container_width=True)
+
+# Predicción con ARIMA
+st.header("Predicción de Ventas con ARIMA")
+ventas_por_mes.set_index('Mes', inplace=True)
+prediccion_arima = predecir_con_arima(ventas_por_mes['Ingreso'])
+
+# Mostrar predicciones
+st.write("Predicciones ARIMA para los próximos 6 meses:")
+st.write(prediccion_arima)
+
+# Predicción con Prophet
+st.header("Predicción de Ventas con Facebook Prophet")
+df_prophet = ventas_por_mes.reset_index()[['Mes', 'Ingreso']]
+df_prophet.columns = ['ds', 'y']
+df_prophet['ds'] = df_prophet['ds'].dt.to_timestamp()
+prediccion_prophet = predecir_con_prophet(df_prophet)
+
+# Mostrar predicciones
+st.write("Predicciones Prophet para los próximos 6 meses:")
+st.write(prediccion_prophet[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(6))
+
+# Gráfico comparativo de predicciones
+st.header("Comparación de Predicciones: ARIMA vs Prophet")
+fig = px.line()
+fig.add_scatter(x=ventas_por_mes.index, y=ventas_por_mes['Ingreso'], name='Datos Reales', mode='lines+markers')
+fig.add_scatter(x=prediccion_arima.index, y=prediccion_arima, name='Predicción ARIMA', mode='lines+markers')
+fig.add_scatter(x=prediccion_prophet['ds'], y=prediccion_prophet['yhat'], name='Predicción Prophet', mode='lines+markers')
+fig.update_layout(title='Comparación de Predicciones: ARIMA vs Prophet',
+                  xaxis_title='Mes', yaxis_title='Ingreso ($)')
 st.plotly_chart(fig, use_container_width=True)
