@@ -11,7 +11,8 @@ import streamlit as st
 
 # Configuración
 NUM_REGISTROS = 10000
-PRODUCTOS = ['Producto A', 'Producto B', 'Producto C', 'Producto D', 'Producto E']
+PRODUCTOS = ['Producto A', 'Producto B', 'Producto C', 'Producto D', 'Producto E', 
+             'Producto F', 'Producto G', 'Producto H', 'Producto I', 'Producto J']
 REGIONES = ['Norte', 'Sur', 'Este', 'Oeste']
 FECHA_INICIO = datetime(2023, 1, 1)
 FECHA_FIN = datetime(2023, 12, 31)
