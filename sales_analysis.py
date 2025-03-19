@@ -7,9 +7,7 @@ import plotly.express as px
 import streamlit as st
 from statsmodels.tsa.arima.model import ARIMA
 from prophet import Prophet
-from statsmodels.tsa.stattools import adfuller
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-import matplotlib.pyplot as plt
+from sklearn.metrics import mean_absolute_error
 
 # Configuración
 NUM_REGISTROS = 10000
@@ -44,7 +42,9 @@ def predecir_con_arima(serie_temporal, orden=(1, 1, 1), pasos=6):
     """
     modelo = ARIMA(serie_temporal, order=orden)
     modelo_ajustado = modelo.fit()
-    return modelo_ajustado.forecast(steps=pasos)
+    predicciones_futuras = modelo_ajustado.forecast(steps=pasos)
+    predicciones_historicas = modelo_ajustado.fittedvalues
+    return predicciones_futuras, predicciones_historicas, modelo_ajustado
 
 def predecir_con_prophet(df, periodo_prediccion=6):
     """
@@ -53,7 +53,8 @@ def predecir_con_prophet(df, periodo_prediccion=6):
     modelo = Prophet()
     modelo.fit(df)
     future = modelo.make_future_dataframe(periods=periodo_prediccion, freq='M')
-    return modelo.predict(future)
+    predicciones = modelo.predict(future)
+    return predicciones, modelo
 
 # Configuración de Streamlit
 st.set_page_config(page_title="Análisis de Ventas", layout="wide")
@@ -167,11 +168,19 @@ st.plotly_chart(fig, use_container_width=True)
 # Predicción con ARIMA
 st.header("Predicción de Ventas con ARIMA")
 ventas_por_mes.set_index('Mes', inplace=True)
-prediccion_arima = predecir_con_arima(ventas_por_mes['Ingreso'], orden=(1, 1, 1))  # Parámetros manuales
+predicciones_futuras_arima, predicciones_historicas_arima, modelo_arima = predecir_con_arima(ventas_por_mes['Ingreso'], orden=(1, 1, 1))
 
-# Mostrar predicciones
+# Mostrar predicciones futuras
 st.write("Predicciones ARIMA para los próximos 6 meses:")
-st.write(prediccion_arima)
+st.write(predicciones_futuras_arima)
+
+# Mostrar predicciones históricas
+st.write("Predicciones ARIMA dentro de la muestra (histórico):")
+st.write(predicciones_historicas_arima)
+
+# Calcular el error absoluto medio (MAE) para ARIMA
+mae_arima = mean_absolute_error(ventas_por_mes['Ingreso'], predicciones_historicas_arima)
+st.write(f"Error Absoluto Medio (MAE) para ARIMA: {mae_arima:.2f}")
 
 # Predicción con Prophet
 st.header("Predicción de Ventas con Facebook Prophet")
@@ -181,18 +190,23 @@ df_prophet.columns = ['ds', 'y']
 # Asegurarse de que 'ds' sea de tipo datetime
 df_prophet['ds'] = pd.to_datetime(df_prophet['ds'])
 
-prediccion_prophet = predecir_con_prophet(df_prophet)
+predicciones_prophet, modelo_prophet = predecir_con_prophet(df_prophet)
 
-# Mostrar predicciones
+# Mostrar predicciones futuras
 st.write("Predicciones Prophet para los próximos 6 meses:")
-st.write(prediccion_prophet[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(6))
+st.write(predicciones_prophet[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(6))
+
+# Mostrar predicciones históricas
+st.write("Predicciones Prophet dentro de la muestra (histórico):")
+st.write(predicciones_prophet[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].head(len(df_prophet)))
 
 # Gráfico comparativo de predicciones
 st.header("Comparación de Predicciones: ARIMA vs Prophet")
 fig = px.line()
 fig.add_scatter(x=ventas_por_mes.index, y=ventas_por_mes['Ingreso'], name='Datos Reales', mode='lines+markers')
-fig.add_scatter(x=prediccion_arima.index, y=prediccion_arima, name='Predicción ARIMA', mode='lines+markers')
-fig.add_scatter(x=prediccion_prophet['ds'], y=prediccion_prophet['yhat'], name='Predicción Prophet', mode='lines+markers')
+fig.add_scatter(x=predicciones_historicas_arima.index, y=predicciones_historicas_arima, name='Predicción ARIMA (Histórico)', mode='lines+markers')
+fig.add_scatter(x=predicciones_futuras_arima.index, y=predicciones_futuras_arima, name='Predicción ARIMA (Futuro)', mode='lines+markers')
+fig.add_scatter(x=predicciones_prophet['ds'], y=predicciones_prophet['yhat'], name='Predicción Prophet', mode='lines+markers')
 fig.update_layout(title='Comparación de Predicciones: ARIMA vs Prophet',
                   xaxis_title='Mes', yaxis_title='Ingreso ($)')
 st.plotly_chart(fig, use_container_width=True)
