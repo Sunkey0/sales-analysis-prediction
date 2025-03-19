@@ -7,7 +7,6 @@ import plotly.express as px
 import streamlit as st
 from statsmodels.tsa.arima.model import ARIMA
 from prophet import Prophet
-from pmdarima import auto_arima
 from statsmodels.tsa.stattools import adfuller
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 import matplotlib.pyplot as plt
@@ -23,16 +22,6 @@ FECHA_FIN = datetime(2023, 12, 31)
 def generar_datos_ventas(num_registros, productos, regiones, fecha_inicio, fecha_fin):
     """
     Genera un DataFrame con datos de ventas aleatorios.
-
-    Args:
-        num_registros (int): Número de registros a generar.
-        productos (list): Lista de nombres de productos.
-        regiones (list): Lista de nombres de regiones.
-        fecha_inicio (datetime): Fecha inicial para las ventas.
-        fecha_fin (datetime): Fecha final para las ventas.
-
-    Returns:
-        pd.DataFrame: DataFrame con datos de ventas.
     """
     fake = Faker()
     datos = {
@@ -49,17 +38,9 @@ def generar_datos_ventas(num_registros, productos, regiones, fecha_inicio, fecha
     df['Beneficio'] = df['Ingreso'] - (df['Cantidad Vendida'] * df['Costo Unitario'])
     return df
 
-def predecir_con_arima(serie_temporal, orden=(5, 1, 0), pasos=6):
+def predecir_con_arima(serie_temporal, orden=(1, 1, 1), pasos=6):
     """
     Realiza predicciones usando un modelo ARIMA.
-
-    Args:
-        serie_temporal (pd.Series): Serie temporal para entrenar el modelo.
-        orden (tuple): Parámetros (p, d, q) del modelo ARIMA.
-        pasos (int): Número de pasos a predecir.
-
-    Returns:
-        pd.Series: Predicciones.
     """
     modelo = ARIMA(serie_temporal, order=orden)
     modelo_ajustado = modelo.fit()
@@ -68,13 +49,6 @@ def predecir_con_arima(serie_temporal, orden=(5, 1, 0), pasos=6):
 def predecir_con_prophet(df, periodo_prediccion=6):
     """
     Realiza predicciones usando Facebook Prophet.
-
-    Args:
-        df (pd.DataFrame): DataFrame con columnas 'ds' (fecha) y 'y' (valor).
-        periodo_prediccion (int): Número de períodos a predecir.
-
-    Returns:
-        pd.DataFrame: Predicciones.
     """
     modelo = Prophet()
     modelo.fit(df)
@@ -190,21 +164,10 @@ correlaciones = df_filtrado[['Cantidad Vendida', 'Precio Unitario', 'Costo Unita
 fig = px.imshow(correlaciones, text_auto=True, title='Mapa de Calor de Correlaciones')
 st.plotly_chart(fig, use_container_width=True)
 
-# Selección de parámetros ARIMA con auto_arima
-st.header("Selección de Parámetros ARIMA")
-st.write("Usando auto_arima para encontrar los mejores parámetros (p, d, q)...")
-
-# Encontrar los mejores parámetros
-modelo_auto_arima = auto_arima(ventas_por_mes['Ingreso'], seasonal=False, trace=True)
-st.write(modelo_auto_arima.summary())
-
-# Obtener los parámetros óptimos
-p, d, q = modelo_auto_arima.order
-
 # Predicción con ARIMA
 st.header("Predicción de Ventas con ARIMA")
 ventas_por_mes.set_index('Mes', inplace=True)
-prediccion_arima = predecir_con_arima(ventas_por_mes['Ingreso'], orden=(p, d, q))
+prediccion_arima = predecir_con_arima(ventas_por_mes['Ingreso'], orden=(1, 1, 1))  # Parámetros manuales
 
 # Mostrar predicciones
 st.write("Predicciones ARIMA para los próximos 6 meses:")
