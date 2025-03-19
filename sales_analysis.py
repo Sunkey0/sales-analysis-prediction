@@ -49,6 +49,38 @@ def generar_datos_ventas(num_registros, productos, regiones, fecha_inicio, fecha
     df['Beneficio'] = df['Ingreso'] - (df['Cantidad Vendida'] * df['Costo Unitario'])
     return df
 
+def analizar_ventas_por(df, columna_agrupacion):
+    """
+    Agrupa los datos de ventas por una columna específica y calcula métricas agregadas.
+
+    Args:
+        df (pd.DataFrame): DataFrame con datos de ventas.
+        columna_agrupacion (str): Columna por la cual agrupar.
+
+    Returns:
+        pd.DataFrame: DataFrame con métricas agregadas.
+    """
+    return df.groupby(columna_agrupacion).agg({
+        'Ingreso': 'sum',
+        'Beneficio': 'sum',
+        'Cantidad Vendida': 'sum'
+    }).reset_index()
+
+
+def calcular_crecimiento_mensual(df):
+    """
+    Calcula el crecimiento mensual de ingresos y beneficios.
+
+    Args:
+        df (pd.DataFrame): DataFrame con datos de ventas mensuales.
+
+    Returns:
+        pd.DataFrame: DataFrame con crecimiento mensual.
+    """
+    df['Crecimiento Ingreso'] = df['Ingreso'].pct_change() * 100
+    df['Crecimiento Beneficio'] = df['Beneficio'].pct_change() * 100
+    return df
+
 # Configuración de Streamlit
 st.set_page_config(page_title="Análisis de Ventas", layout="wide")
 st.title("Análisis de Ventas y Predicción")
@@ -59,4 +91,38 @@ df_ventas = generar_datos_ventas(NUM_REGISTROS, PRODUCTOS, REGIONES, FECHA_INICI
 # Mostrar datos en un menú desplegable
 with st.expander("Ver Datos de Ventas Generados"):
     st.write(df_ventas)
+
+# Análisis de ventas por producto y región
+st.header("Análisis de Ventas por Producto y Región")
+ventas_por_producto = analizar_ventas_por(df_ventas, 'Producto')
+ventas_por_region = analizar_ventas_por(df_ventas, 'Región')
+
+# Mostrar DataFrames en menús desplegables
+with st.expander("Ventas por Producto"):
+    st.write(ventas_por_producto)
+
+with st.expander("Ventas por Región"):
+    st.write(ventas_por_region)
+
+# Análisis de ventas mensuales
+st.header("Análisis de Ventas Mensuales")
+df_ventas['Mes'] = df_ventas['Fecha'].dt.to_period('M')
+ventas_por_mes = analizar_ventas_por(df_ventas, 'Mes')
+ventas_por_mes = calcular_crecimiento_mensual(ventas_por_mes)
+
+# Mostrar DataFrame en un menú desplegable
+with st.expander("Ventas Mensuales"):
+    st.write(ventas_por_mes)
+
+# Gráficos de ingresos y beneficios mensuales
+st.header("Gráficos de Ingresos y Beneficios Mensuales")
+fig, ax = plt.subplots(figsize=(12, 6))
+ax.plot(ventas_por_mes['Mes'].astype(str), ventas_por_mes['Ingreso'], label='Ingreso', marker='o')
+ax.plot(ventas_por_mes['Mes'].astype(str), ventas_por_mes['Beneficio'], label='Beneficio', marker='o')
+ax.set_title('Ingresos y Beneficios Mensuales')
+ax.set_xlabel('Mes')
+ax.set_ylabel('Monto ($)')
+ax.legend()
+st.pyplot(fig)
+
 
